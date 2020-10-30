@@ -19,7 +19,7 @@
     // C# 9 Syntax.
     System.Console.WriteLine("Hello, world!");
     ```
-    
+
     2. **关键字**（Keyword）的概念
     3. **标识符**（Identifier）
         1. 概念
@@ -88,7 +88,7 @@
          9. `Length` 属性获取字符串长度
       2. 字符串的**不可变性**（Immutability）（但你可以用指针进行内容的修改）
       3. `string.Empty` 特殊只读量
-   4. **值类型**（Value Type）和**引用类型**（Reference Type）
+   5. **值类型**（Value Type）和**引用类型**（Reference Type）
       1. 值类型：轻量级类型，在函数传参的时候会以栈内存赋值克隆副本以增强性能
       2. 引用类型：只能放在堆内存的东西，随时随地都是以地址进行传递和使用
       3. 对应类型的**字面量**（Literal）
@@ -187,7 +187,7 @@
    7. `out` 参数
    8. `params` 参数，允许数组拆分为多参数形式（变长参数）
    10. **递归**（Recursion）
-   
+
 7. **指针**（Pointer）
 
    1. `unsafe` 块介绍
@@ -241,6 +241,7 @@
              8. 终结器：用于销毁对象时被系统自动调用，不可以手动调用
                 1. 写法 `~类型名()`
                 2. 不写访问修饰符，默认为 `private`
+          2. **复制构造器**（Copy constructor）：将当前类型作为参数传递到构造器里，这个构造器叫复制构造器；但不能直接使用 `this` 接收，因为他俩还是一样的地址指向
        2. **字段**（Field）：类似 C 里的成员
           1. 写法：`[访问修饰符] (static)? (readonly|const)? 类型 字段名 (= 数值)?`
           2. 新增的访问修饰符：`private`：只能在当前类内部可以用，访问修饰符默认为 `private`
@@ -339,10 +340,10 @@
           7. 可以在抽象类里写一些已经有执行逻辑的方法，且这些方法可以标记 `sealed` 以防止派生下去的时候又修改（重写）掉执行逻辑
       15. `is` 关键字对类型进行判断和验证
       16. `as` 关键字对类型进行判断和转换
-   17. 综合内容：自定义异常类型，继承 `System.Exception`，然后就可以用 `throw` 来抛出你自己定义的异常了
-   
+      17. 综合内容：自定义异常类型，继承 `System.Exception`，然后就可以用 `throw` 来抛出你自己定义的异常了
+
 7. 类的实现：**接口**（interface）
-   
+
       1. 写法：`[访问修饰符] interface 接口名`
       2. 接口命名规范：帕斯卡，且第一个字符必须是 `I`：`IEdible`（可以吃的）、`IRunnable`（可以跑的）等
       3. 接口只能用 `internal` 或 `public` 修饰符修饰，默认是 `internal`
@@ -360,8 +361,8 @@
             2. 接口的继承等效于把别的接口的所有方法拿过来用了，当你要实现的时候，必须要实现这个接口，以及它继承的接口的所有成员
          7. 接口的多态性：接口也可以当成抽象类一样，用一个实例来赋值：`IRunnable r = new Man()`；此时，`r` 变量只能看到 `IRunnable` 里的所有信息（因为它是这个类型的），进而进行调用
       8. 接口对象当参数传递到函数里
-   9. 接口是引用类型，因此养成好习惯，检查 `null`
-   
+      9. 接口是引用类型，因此养成好习惯，检查 `null`
+
 11. 值类型和自定义结构
     1. 值类型的诞生原因：为了加快传参速度；所以值类型一般都很小，尽量不把大的类型定义为结构（一般是 64 字节）；大多数内置类型都是值类型，除了 `string` 和 `object` 是引用类型
     2. 值类型传参是复制内容；包含指针则只复制地址数值以表达两个成员指向同一个内存块；引用类型始终拷贝的是引用
@@ -371,13 +372,30 @@
        2. 结构必须在构造器里实例化所有成员；引用类型并非如此
        3. 结构的无参构造器随时都可以用；引用类型构造器只在你不写任何自定义构造器的情况下会自动生成
        4. 实例化结构对象，如果是在方法里，那么就是放在栈内存里的，它会在临时存储区创建对象，然后以默认行为初始化成员，最后调用构造器赋值；而引用类型则不用，直接创建在堆内存上；当然，值类型也可以放在堆内存里，不过需要引用类型的帮助，或者是某个结构里的字段。如果是全局字段还是放栈内存里的话，那么放在哪个栈帧上呢？
-    5. 值类型和引用类型的存储区转换：**装箱**（Boxing）和**拆箱**（Unboxing）：
+    5. 值类型的复制构造器：值类型的复制构造函数可以直接使用 `this` 关键字来接收赋值信息，因为值类型是复制副本，因此完全可以直接通过赋值运算符把数值给过去
+
+    ```csharp
+    public struct Student
+    {
+        private int _age;
+        private bool _isBoy;
+        private string _name;
+
+        public Student(Student another)
+        {
+            // Assign directly.
+            this = another;
+        }
+    }
+    ```
+
+    6. 值类型和引用类型的存储区转换：**装箱**（Boxing）和**拆箱**（Unboxing）：
        1. 装箱：`object i = 3;`，即值类型赋值给引用类型时，就会把数值包装起来，放在堆内存里，以地址形式表达；
        2. 拆箱：`int i = (int)o;`，即引用类型转回值类型时，就会把数据信息提取出来，放回栈内存
        3. `object.ReferenceEquals` 对值类型处理结果总为 `false`，因为需要装箱，随后导致地址一定不相同
        4. 装箱和拆箱很耗性能，请尽量不要发生此类行为
        5. 拆箱类型错误会引起运行时异常（类似于前面强制转换错误时产生异常）
-    6. 值类型不可继承任何类，但能实现接口；值类型不能派生自别的值类型，默认派生自 `System.ValueType`（而它又派生自 `System.Object`，它们都是引用类型）；在自定义值类型时，为了不影响执行效率和性能，请把默认实现的所有方法都重写掉
+    7. 值类型不可继承任何类，但能实现接口；值类型不能派生自别的值类型，默认派生自 `System.ValueType`（而它又派生自 `System.Object`，它们都是引用类型）；在自定义值类型时，为了不影响执行效率和性能，请把默认实现的所有方法都重写掉
 
 12. **枚举**（Enumeration）
 
@@ -407,7 +425,7 @@
     ```csharp
     // Delegate type stetement.
     internal delegate bool Comparer<T>(T left, T right);
-                
+
     internal class ProjectTester
     {
         // Method statement.
@@ -444,20 +462,20 @@
         2. `operator +`：为委托添加新的函数，到时候调用委托执行的时候（`.Invoke`）可连续调用多个方法
         3. `operator -`：为委托删除原本的函数，到时候调用委托执行的时候，这个原本有的函数就不会再被调用了
         4. 委托的 `operator +` 不满足交换律：委托的函数增减是按顺序的，如果顺序不对，删除函数就会失败：
-                
+
         ```csharp
         CustomDelegate c = new CustomDelegate(A);
         c += new CustomDelegate(B) + new CustomDelegate(C);
         c -= new CustomDelegate(C) + new CustomDelegate(B); // Failed.
         ```
-        
+
         5. 委托列表里的函数如果出现异常，内部调用的函数将会立刻终止执行，然后退到委托外部抛出该异常（不过 IDE 一般都能识别错误位置，所以显示的错误的执行信息确实在方法内，而不是委托外）
 
 14. **事件**（Events）
 
     1. 事件：对于一些情况下需要立马做的行为，比如水温检测器（用 `Thermostat` 类表达）在温度发生变化后立刻执行一些操作，例如通知用户水温发生改变
     2. `event` 关键字，简单例子：
-             
+
     ```csharp
     delegate void TemperatureChangedEventHandler(float newValue);
 
@@ -465,24 +483,24 @@
     {
         private float _temperature;
         private TemperatureChangedEventHandler _handler;
-                    
+
         public Thermostat(float temperature)
         {
              Temperature = temperature;
-                        
+
              _handler += new TemperatureChangedEventHandler(OnTemperatureChanged);
         }
-                    
+
         public float Temperature
         {
             get { return _temperature; }
-                        
+
             set
             {
                 if (value != _temperature)
                 {
                     _temperature = value;
-                                
+
                     // Trigger the event if the handler is not null.
                     if (_handler != null)
                     {
@@ -497,7 +515,7 @@
             add
             {
                 _handler += value;
-                            
+
                 // Or.
                 //Delegate.Combine(_handler, value);
             }
@@ -517,7 +535,7 @@
         }
     }
     ```
-    
+
     3. 事件的优点：事件是委托字段的封装器，因此出了这个类的任何其他地方都只能使用 `operator +=` 和 `operator -=` 防止直接篡改和修改委托的函数列表；这并不等于你可以用 `operator -=` 减掉原本的方法，因为封装的机制，这使得你不可能知道原来这里封装了什么方法，除非别人告诉你了（但这样已经没有体现出封装的意义了）
     4. 静态事件：事件并不属于任何**一个**对象的，而是通用机制，大家都要到这里做一些操作，这里我们可以使用静态事件来表达，语法：`static event 委托类型名 事件名 { 添加器; 删除器; }`；另外，静态事件很少用
 
@@ -560,20 +578,20 @@
          {
              const int Times = int.MaxValue;
              int count = 0;
-        
+
              static void Main()
              {
                  Thread thread = new Thread(new ThreadStart(Decrement));
-        
+
                  Increment();
              }
-        
+
              static void Increment()
              {
                  for (int i = 0; i < Times; i++)
                      count++;
              }
-        
+
              static void Decrement()
              {
                  for (int i = 0; i < Times; i++)
@@ -581,9 +599,9 @@
              }
          }
          ```
-        
+
          最后看到的结果可能是一个随意的数值（不可再现性）
-              
+
          2. 使用 `Monitor.Enter` 和 `Monitor.Exit` 达到同步要求：创建一个 `object` 对象，直接实例化出来（`new object()`），然后来锁住它
          3. 锁住的对象不建议使用值类型，建议使用私有的、静态的引用类型对象；不建议使用 `this`，如果程序挂了，那么 `this` 无法解锁，更容易出问题；不建议使用 `typeof(string)` 和 `string` 之类的东西，因为 `string` 在 C# 里被特殊处理过，是不变的，就很类似于值类型赋值的复制副本，因此不建议
          4. `volatile` 修饰符：保证可被多个线程读写
@@ -637,7 +655,7 @@
 
         ```csharp
         public delegate bool Comparison<T>(T left, T right);
-                  
+
         public BubbleSort<T>(T[] array, Comparsion comparsion)
         {
             // ...
@@ -672,7 +690,7 @@
             1. 写法：`值类型? 变量名 = 数值`
             2. 注意它是一个封装的结构，因此不能直接当普通的数值用，不过大部分值类型的用法都是可以用的，比如使用 `operator ==` 等运算符；但如果数值为 `null` 的时候，直接使用类似于 `.ToString` 的方法，会直接产生错误
         6. 访问级别不同的 getter 和 setter：允许 getter 和 setter 包含不同的访问级别，比如
-    
+
         ```csharp
         public int Property
         {
@@ -691,7 +709,7 @@
 
         // Older style.
         SomeMethod.InvokeMethod(delegate (int v) { return GetStringResult(v); });
-                  
+
         // Newer style.
         SomeMethod.InvokeMethod(GetStringResult);
         ```
@@ -762,7 +780,7 @@
 
             ```csharp
             public delegate bool Comparison<T>(T left, T right);
-                     
+
             public BubbleSort<T>(T[] array, Comparsion comparsion)
             {
                 // ...
@@ -804,9 +822,9 @@
 
         ```csharp
         public int Prop => 3;
-                  
+
         // Equivalent to
-        public int Prop { get { return 3; }}
+        public int Prop { get { return 3; } }
         ```
 
         7. `null` 条件运算符（`?`）和 `null` 传播运算符（`??`）
@@ -827,14 +845,14 @@
 
         9. `nameof`：把成员用 `nameof` 关键字修饰，返回一个字符串，即这个成员的字符串表达形式，类似于 C 里的 `#` 宏：`#Hello` 返回 `"Hello"`
         10. 字典的初始化器：允许对字典进行初始化：
-            
+
         ```csharp
         var list = new Dictionary<int, string>();
         list.Add(1, "A");
         list.Add(2, "B");
         list.Add(3, "C");
         list.Add(4, "D");
-                   
+
         // C# 6.
         var list = new Dictionary<int, string>
         {
