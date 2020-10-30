@@ -3,23 +3,23 @@
 1. C# 简介
 
     1. 编译简单 C# 语言程序：
-      ```csharp
-      internal static class Program
-      {
-      	private static void Main()
-          {
-              System.Console.WriteLine("Hello, world!");
-          }
-      }
-      ```
+    ```csharp
+    internal static class Program
+    {
+        private static void Main()
+        {
+            System.Console.WriteLine("Hello, world!");
+        }
+    }
+    ```
 
-      或
+    或
 
-      ```csharp
-      // C# 9 Syntax.
-      System.Console.WriteLine("Hello, world!");
-      ```
-      
+    ```csharp
+    // C# 9 Syntax.
+    System.Console.WriteLine("Hello, world!");
+    ```
+    
     2. **关键字**（Keyword）的概念
     3. **标识符**（Identifier）
         1. 概念
@@ -517,7 +517,7 @@
         }
     }
     ```
-            
+    
     3. 事件的优点：事件是委托字段的封装器，因此出了这个类的任何其他地方都只能使用 `operator +=` 和 `operator -=` 防止直接篡改和修改委托的函数列表；这并不等于你可以用 `operator -=` 减掉原本的方法，因为封装的机制，这使得你不可能知道原来这里封装了什么方法，除非别人告诉你了（但这样已经没有体现出封装的意义了）
     4. 静态事件：事件并不属于任何**一个**对象的，而是通用机制，大家都要到这里做一些操作，这里我们可以使用静态事件来表达，语法：`static event 委托类型名 事件名 { 添加器; 删除器; }`；另外，静态事件很少用
 
@@ -587,6 +587,7 @@
         ```
 
         最后看到的结果可能是一个随意的数值（不可再现性）
+        
         2. 使用 `Monitor.Enter` 和 `Monitor.Exit` 达到同步要求：创建一个 `object` 对象，直接实例化出来（`new object()`），然后来锁住它
         3. 锁住的对象不建议使用值类型，建议使用私有的、静态的引用类型对象；不建议使用 `this`，如果程序挂了，那么 `this` 无法解锁，更容易出问题；不建议使用 `typeof(string)` 和 `string` 之类的东西，因为 `string` 在 C# 里被特殊处理过，是不变的，就很类似于值类型赋值的复制副本，因此不建议
         4. `volatile` 修饰符：保证可被多个线程读写
@@ -595,6 +596,7 @@
         7. **死锁**（Deadlock）：
             1. 四大特性：**互斥**（Mutual Exclusion）、**占有和保持**（Hold & Wait）、**不可抢占**（No preemption）和**循环等待**（Circular wait），四大特性缺一不可，都满足时必然死锁
             参考文章：https://user.qzone.qq.com/747507738/blog/1598518585 的 Part 5（死锁）
+
             2. 避免不必要的锁定，以减少甚至消除死锁的可能性
         8. 可用于同步的模型：互斥量 `Mutex`
         9. 其他东西
@@ -610,9 +612,9 @@
             2. 泛型的好处：方便写代码，避免不必要的装箱和拆箱
             这里可以举例，比如我有一个列表想要支持所有的数据类型，这样唯一的办法是只能用 `object` 作为成员（因为它是所有类型的基类型）；但值类型会装箱，导致性能上的损失
             3. 泛型类自定义：
-            * `[访问修饰符] struct 结构体名<泛型参数>`
-            * `[访问修饰符] class 类名<泛型参数>`
-            * `[访问修饰符] interface 接口名<泛型参数>`
+                * `[访问修饰符] struct 结构体名<泛型参数>`
+                * `[访问修饰符] class 类名<泛型参数>`
+                * `[访问修饰符] interface 接口名<泛型参数>`
             4. 文档注释：`<typeparam>` 表示泛型参数的含义
             5. 定义构造器的时候不写泛型参数，因为在声明时就确定了参数名了，就不必再写一次；但在实例化成员的时候必须给出泛型参数以提示实例化的对象到底应该用什么类型作为泛型参数
             6. `default(T)` 字面量：可以确定这个泛型类型的默认数值，到具体化的时候会确定结果信息
@@ -831,7 +833,7 @@
 
         9. `nameof`：把成员用 `nameof` 关键字修饰，返回一个字符串，即这个成员的字符串表达形式，类似于 C 里的 `#` 宏：`#Hello` 返回 `"Hello"`
         10. 字典的初始化器：允许对字典进行初始化：
-               
+            
         ```csharp
         var list = new Dictionary<int, string>();
         list.Add(1, "A");
