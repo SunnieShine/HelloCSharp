@@ -643,9 +643,15 @@
             10. 泛型方法：对特有的方法追加泛型参数达到别的效果，用法和前面说的差不多
                 1. 写法：`[访问修饰符] (static)? 返回值类型 方法名<泛型参数表列>(参数表列)( : where 泛型参数 : 泛型约束)?`
                 2. 泛型参数类型推断：如果可以从参数和返回值确定泛型参数的具体类型时，可以不写；但如果有多个方法重载，导致无法确定使用哪个函数时，需要写出泛型参数
+                3. 泛型方法的重载：可以允许重名的不同泛型约束的泛型方法，但当如果一个对象同时满足两个泛型约束的时候，会产生编译器错误，因为不知道应该调用哪一个方法；但如果确实需要重载不同泛型约束但同名同参数类型的方法时，请建议重载类似于 `where T : struct` 和 `where T : class` 带这样的约束的方法，以保证泛型约束一定不冲突
             11. 泛型参数是可以使用类型转换运算符 `(T)` 的
             12. 泛型的实现原理：运行时也可以看到泛型，它实际上类似于签到的模板表格，在用的时候写上你要用的这个泛型它的泛型参数类型是啥，具体就会自动把它填入到表格里，使得整个结构或者类的所有泛型参数都专门化（就是直接表示为具体类型），此时就可以直接用这个结构或者类了
-            13. 其他泛型接口使用：
+            13. 泛型的缺陷：
+                * 不允许指针类型作为泛型参数
+                * 没有以方法为单位的约束
+                * 不允许条件或的约束
+                * 不允许类似数值运算的约束（运算符相关的）
+            14. 其他泛型接口使用：
                 * `IEnumerable<T>`：使用后可以让对象用 `foreach`
                 * `ICollection<T>`：表示对象是一个集合
                 * `IReadOnlyCollection<T>`：表示对象是一个只读的集合
@@ -798,7 +804,9 @@
 
             2. Lambda 表达式可以捕获变量了：可以使用外部的变量，不过都是引用传递的，也就是说，如果你在内部修改该数值，外部的变量也会跟着变
         8. 表达式树：允许自定义表达式序列，使用 C# 代码生成一个表达式
-        9. 分部方法：允许把方法的声明和实现分开放到两个不同的文件里
+        9. 分部方法：
+            1. 允许把方法的声明和实现分开放到两个不同的文件里
+            2. 如果不实现的话，编译器就会自动删除掉这个方法的调用，就当不存在一样
         10. `lock` 语句：`Monitor.Enter` 和 `Monitor.Exit` 的包装
     3. C# 4
         1. 动态绑定：允许使用 `dynamic` 关键字表达一个数据类型，该类型可以使用任何写法，来代替一个对象的执行，具体这个写法对不对取决于运行时检查对象是不是这个类型，有没有这个调用方式
@@ -863,79 +871,251 @@
         };
         ```
     6. C# 7
-        1. `out` 参数：允许方法以 `out` 作为参数修饰符，表达返回多个数的时候，从参数返回
+        1. `out` 参数
+            1. 允许方法以 `out` 作为参数修饰符，表达返回多个数的时候，从参数返回
+            2. 允许该类型变量可在调用处定义变量，比如 `int.TryParse("123", out int result);`，这里的 `result` 就是定义出来的变量
         2. 模式匹配：`o is int i`
-        3. 值元组
-        4. 解构器（解构函数）
-        5. 弃元
-        6. 本地函数
-        7. 二进制字面量
-        8. 数字分隔符
-        9. `ref` 临时变量和 `ref` 返回
-        10. 自定义异步返回类型
-        11. 更多的 Lambda 风格表达
-        12. `throw` 表达式：内嵌到 `?:` 和 `??` 里
-        13. 异步 `Main` 方法
-        14. `default` 表达式可以推断类型了
-        15. 可推断的值元组元素名称
-        16. 泛型可以使用模式匹配
+        3. 值元组：允许使用小括号语法对多个变量赋值和取值的一种机制：
+            1. 回顾一下 C# 4 提供的元组类型 `Tuple<>`，不好用的地方在于它必须要按照 C# 的语法来写，而且很笨重（引用类型），再加上取数值的时候需要使用 `Item1`、`Item2` 这样的名字，很丑，所以值元组（`ValueTuple<>`）诞生了
+            2. 写法：`元组类型或var 变量名 = (数据列表)`，比如
+
+            ```csharp
+            var pair = (24, "Sunnie");
+            var triplet1 = (Name: "Sunnie", IsBoy: true, Age: 24);
+            (string Name, bool IsBoy, int Age) triplet2 = ("Sunnie", true, 24);
+            var mixed = (Name: "Sunnie", 24);
+            (int, bool) unnamed = (Value: 10, BooleanResult: false);
+            ```
+
+            也就是说，可以不取名，也可以取名；如果不取名（比如 `pair` 这样），那么取值就需要使用标准语法 `pair.Item1` 等来取值；如果取了名，那么就可以直接用取名：`triplet1.Name`、`triplet2.Age` 等；也可以混合取名和不取名的信息，不取名的用标准语法，取名的用取的名字来获取数值；最后一种（`unnamed`）是一种把取了名的值元组赋值给了一个没有取名的值元组，所以接收结果没有取名，因为这个值元组变量本身就没有取名；取值照样要用 `unnamed.Item1` 等语法来取值；值元组最多允许 8 个元素，即 8 元组
+            
+            3. 原版语法：这种写法等价于 `ValueTuple.Create` 方法的调用：
+
+            ```csharp
+            var pair1 = (24, "Sunnie");
+            
+            // Equivalent to
+            var pair2 = ValueTuple.Create(24, "Sunnie");
+            ```
+
+            4. 因为背后机制是用 `public` 的字段实现的，所以在取名的时候请建议使用帕斯卡命名法进行命名
+            5. 对位赋值：使用值元组的语法对不同的变量或一些属性赋值：
+
+            ```csharp
+            var (age, name) = (24, "Sunnie");
+            (int age, string name) = (24, "Sunnie");
+            
+            // Equivalent to
+            int age = 24;
+            string name = "Sunnie";
+            ```
+
+            这种语法只是写起来像是值元组，实际上还是对位赋值的；而且要注意的是，这个语法是值元组的语法，所以不允许指针在里面，因为泛型参数是不允许指针的
+
+            6. 值元组元素名称可推断：类似 C# 3 的匿名类型，只要我们传入的是变量名而不是字面量的话，这个变量名就会自动被认为是这个值元组的当前元素名称，比如：
+
+            ```csharp
+            Student thatStudent;
+            var pair = (thatStudent.Age, thatStudent.Gender);
+            
+            // Equivalent to
+            (int Age, bool Gender) pair = (thatStudent.Age, thatStudent.Gender);
+            ```
+
+            这样的格式，而不是我们以为的 `(int, bool) pair = ...`
+
+        4. 解构器（解构函数）：允许在一个类或结构里实现 `Deconstruct` 方法，来让这个类或对象拥有解构的行为：
+
+        ```csharp
+        public struct Student
+        {
+            public int Age { get; }
+            public bool IsBoy { get; }
+            
+            public void Deconstruct(out int age, out int isBoy) =>
+                (age, isBoy) = (Age, IsBoy);
+        }
+        ```
+
+        这样写了之后，`Student` 类型的实例都可以使用元组语法来获取相应对象的数据结果：
+
+        ```csharp
+        // Suppose we have a variabe named 'student'.
+        var (age, isBoy) = student;
+        ```
+
+        5. 弃元：允许变量声明的地方使用弃元关键字 `_` 来表达这个变量我们不要了（放弃掉，不用它）：
+
+        ```csharp
+        var (_, isBoy) = student;
+        ```
+
+        这种写法表达我不想用解构器返回的 `age` 结果，所以我写弃元符来占位
+
+        6. 本地函数：允许一个方法嵌套到某一个方法里，来表示这个方法本身只在某一个方法里执行和使用
+        7. 二进制字面量：允许二进制形式的字面量：`0b11100011`
+        8. 数字分隔符：允许对整数字面量用下划线分隔每一节内容，增强可读性：`0b11_10_00_11`；分隔符可以在任何时候和任何地方写（当然了，肯定不能写在 `0` 和 `b` 之间，对吧）
+        9. `ref` 临时变量和 `ref` 返回：允许一个值类型对象以引用形式返回和定义变量，这样来减少内存分配，提高执行性能和效率
+        10. 自定义异步返回类型：可以自己写一个异步类型出来，这样可以使用 `async` 语法来兼容你写的这个类型，但需要实现指定的方法和接口
+        11. 更多的 Lambda 风格表达：现在属性、方法、索引器等成员都可以使用 Lambda 风格来表达返回结果了
+        12. `throw` 表达式：内嵌到 `operator ?:` 和 `operator ??` 里，这样可以简化执行的代码
+        13. 异步 `Main` 方法：允许 `Main` 方法是异步执行的：`async Task Main`
+        14. `default` 表达式可以推断类型了：以前我们需要把字面量的类型写出来来表示这个类型的默认值；现在我们可以不写类型，只要能推断出类型就可以了：`int val = default`
+        16. 允许泛型可以使用模式匹配
         17. `Span<T>` 类型和 `ref struct`（仅放在栈内存的类型）
-        18. `in` 参数修饰符和 `readonly ref`
-        19. `ref` 条件表达式
-        20. 命名参数允许一定只出现在末尾
-        21. `private protected` 访问修饰符
-        22. 允许十六进制和二进制字面量使用数字分隔符
-        23. 非托管类型的定义
+            1. 诞生原因：因为普通的 `struct` 是可以装箱的，所以不便于编译器优化代码，所以高效率的 `ref struct` 诞生了：它只能放在栈内存里，用来传参使用，保证性能和效率
+            2. 为什么是 `ref` 这个关键字：因为我们之前经常拿 `ref` 关键字来表达临时变量（之前的 `ref` 临时变量一节），所以这个 `ref` 在这个时候暗含了一层“可以用来充当临时变量”这么一层意思在里面，所以 `ref struct` 就表示只能用在临时变量（栈内存）的结构
+            3. 并不是一定要临时变量：只要你有 `ref struct` 的结构，那么里面就可以放别的 `ref struct` 的字段或属性；但如果是普通的结构，就不能放 `ref struct` 类型的东西来作为成员了
+            4. 使用条件很苛刻，是因为它本身限制非常多，要这么多限制才能保证真正意义上的栈内存使用：
+                * 不能对 `ref struct` 装箱：因为无法向属于 `object`、`dynamic` 或任何接口类型的变量分配 `ref struct` 类型
+                * `ref struct` 类型不能实现接口
+                * 不能将 `ref struct` 声明为类或常规结构的字段成员，包括声明自动实现的属性，而后者会创建一个由编译器生成的支持字段，这是在堆内存的
+                * 不能声明异步方法中属于 `ref struct` 类型的本地变量，也不能在返回类似 `Task` 或者 `Task<TResult>` 类型的同步方法中声明它们
+                * 无法在迭代器中声明 `ref struct` 本地变量
+                * 无法捕获 Lambda 表达式或本地函数中的 `ref struct` 变量
+        18. `in` 参数修饰符和 `readonly ref`：允许返回值和参数传参的时候只读，不可修改，类似 C 里的 `const`，但不同的是，C 的 `const` 是编译器层面的，而且你可以绕过；C# 的 `in` 是传指针过去，使得没办法修改；`readonly ref` 则是约束返回值传引用的基础上也不可修改
+        19. `ref` 条件表达式：允许 `operator ?:` 返回 `ref` 结果
+        20. 命名参数不一定只出现在末尾：C# 4 的命名参数只能放在方法的末尾，现在命名参数随时随地都可以用了
+        21. `private protected` 访问修饰符：继承关系仅在项目内生效，别的外部程序调用 API 的时候将无法看到这类成员，即使是继承了
         24. `System.Enum` 和 `System.Delegate` 泛型约束
             1. `System.Enum` 约束传入的对象是一个枚举类型
             2. `System.Enum` 仅约定是一个枚举类型，但枚举特有的运算符在这个地方不能用；如果需要用运算符，请你将它转换为值类型后进行值类型的运算符进行计算（需要获取它的大小，因此请参考下面 C# 8 `unmanaged` 约束的做法）
             3. `System.Delegate` 约束一个委托类型
-        25. `ref` 变量重新赋值
-        26. `stackalloc` 的初始化器
-        27. `fixed` 字段
+        26. `stackalloc` 的初始化器：允许使用类似数组初始化器的模式初始化栈内存数组：`stackalloc[] { 1, 2, 3 }`
+        27. `fixed` 字段：允许字段在初始情况下就固定下来长度，该字段将被改写为指针，但因为长度固定，所以内容可以直接使用，通过索引器的方式使用
         28. 自定义 `fixed` 语句声明（实现 `GetPinnableReference` 即可）
-        29. 使用新的算法减少重载二义性
-        30. 内联 `out` 变量定义到函数调用里面
-        31. 实现了值元组的 `operator ==` 和 `operator !=`
+        31. 值元组可以使用 `operator ==` 和 `operator !=` 了
         32. 允许把特性标记到属性上，直接指定到隐藏到背后的字段上
     7. C# 8
         1. 可空引用类型
-        2. 默认接口成员
-        3. 递归模式
-        4. `await foreach` 和 `await using`
-        5. `using` 语句
-        6. 范围和索引运算：`^` 和 `..`
-        7. 复合 `null` 传播赋值运算符 `??=`
-        8. 静态本地函数
+            1. 允许使用类似可空值类型的语法 `T?` 来约束引用类型，规定和查看类型是否可空
+            2. 启用特性的两种办法：
+                1. 在 `*.csproj` 文件里添加 `<Nullable>enable</Nullable>` 以全局启用
+                2. 在文件的开头添加预处理指令 `#nullable enable`
+            3. 预处理指令：
+                * `#nullable enable`
+                * `#nullable enable annotations`
+                * `#nullable enable warnings`
+                * `#nullable disable`
+                * `#nullable disable annotations`
+                * `#nullable disable warnings`
+                * `#nullable restore`
+                * `#nullable restore annotations`
+                * `#nullable restore warnings`
+            4. 基本用法：`string? s = null;`，当使用 `string s = null;` 时会产生编译器警告信息，提示你正在把 `null` 赋值给一个不可空的引用类型；如果把 `T?` 类型变量赋值给 `T` 类型的变量时，也会产生警告
+            5. `null` 原谅运算符（`Null`-forgiving Operator）
+                1. 当编译器并不知道我们这里赋值 `null` 不影响可空性的时候，可以使用这个后缀运算符来禁用编译器对这个行为的警告：比如我有一个 `Point` 的类，包含 `X` 和 `Y` 两个信息，然后写了一个解析函数 `Parse`，把字符串转换为这个类型的变量。由于解析有可能失败，所以返回值应当是 `Point?` 的类型。但如果我们使用 `Point result = Point.Parse("(1, 3)");` 类似的写法时，由于返回值是 `Point?` 类型的关系，就会产生编译器错误；所以此时我们需要对这个错误的编译器警告进行禁用：`Point result = Point.Parse("(1, 3)")!;`，在末尾加一个 `!` 就可以了
+                2. 注意运算符会改变类型的语义。如果代码里这么写：
+
+                ```csharp
+                var p = Point.Parse("(1, 3)")!;
+                var q = Point.Parse("(1, 3)");
+                ```
+
+                那么 `p` 是 `Point` 类型，而 `q` 此时应该是 `Point?` 类型
+
+            6. `as` 转换**一定可能**失败，所以返回值必然可能为 `null`，所以如果一定不空，要么建议你使用 `(T)` 强制转换，要么使用 `!` 禁用编译器警告
+            7. `null` 原谅运算符本身很鸡肋也很奇葩，所以不建议随时随地都用这个运算符，而是使用如下的一些模型来减少和削弱对该运算符的使用：
+                1. `NotNullWhenAttribute`：表示返回值类型是布尔值的时候，可以对应到结果是否为 `null`：如果返回值为 `true`，则该数值结果不应该为 `null` 的时候，可以写成 `[NotNullWhen(true)]`，标记到参数上表示该参数满足该约定
+                2. `AllowNullAttribute`：在环境下本来必须写成 `T` 的类型，但临时需要允许传入 `null` 的时候可以用这个特性标记
+                3. `DisallowNullAttribute`：在环境下本来必须写成 `T?` 的类型，但临时需要传入非 `null` 的时候可以用这个特性标记
+                4. `MaybeNullAttribute`：不确定这个类型是不是为 `null`，一般用在带泛型参数的参数名、返回值、属性或者字段等成员上
+                5. `NotNullAttribute`：如果类型必须写成 `T?` 的时候，此时如果输出时不可能为 `null` 的时候可这样标记，这样编译器就知道只有输入方向（比如传参）才是 `T?`
+        2. 默认接口成员：允许接口里写一些函数的具体实现
+        3. 递归模式：允许在 `is` 模式匹配的时候使用属性或 `public` 字段和数值匹配的语法：`stu is { Age: 20, IsGirl: false }`
+        4. `await foreach` 和 `await using`：允许异步迭代和异步使用一些资源
+        5. `using` 语句：不用再写烦人的大括号了，现在直接写 `using var x = ...;` 就可以了
+        6. 范围和索引运算：`^` 和 `..`：
+            1. `^` 写在一个带 `Length` 或 `Count` 属性的集合的中括号索引调用里，表示取倒数第几个元素：`string s = "Hello"; char t = s[^2];`
+            2. `..` 写在一个带 `Slice` 方法、`Length` 或 `Count` 属性的集合里的中括号索引调用里，表示取哪一个范围的元素：`string s = "Hello"; string t = s[0..^2]`；如果范围头部是 0 可不写；如果范围尾部是 ^1 也可以不写
+        7. 复合 `null` 传播赋值运算符 `??=`：`a = a ?? b` 可以简写为 `a ??= b`
+        8. 静态本地函数：允许本地函数标记 `static` 关键字，以禁止捕获任何变量
         9. `unmanaged` 泛型约束
-           1. 非托管类型定义拓展：
-               1. 所有基本类型（`string` 和 `object` 除外）都是非托管类型
-               2. 只包含这些类型的字段和属性的成员的结构，都是非托管类型
-               3. 只包含第 2 点提到的结构，也都是非托管类型
-           2. 约束使得可以用 `sizeof` 关键字计算大小，也可以使用 `T*` 指针运算
-           3. 枚举是非托管类型的，但是 `System.Enum` 在泛型约束里只约束类型，不直接允许使用 `sizeof` 等直接的运算符
-        10. 结构的只读成员
-        11. `stackalloc` 嵌套使用
-        12. `$@""` 和 `@$""`
+            1. 非托管类型定义拓展：
+                1. 所有基本类型（`string` 和 `object` 除外）都是非托管类型
+                2. 只包含这些类型的字段和属性的成员的结构，都是非托管类型
+                3. 只包含第 2 点提到的结构，也都是非托管类型
+            2. 约束使得可以用 `sizeof` 关键字计算大小，也可以使用 `T*` 指针运算
+            3. 枚举是非托管类型的，但是 `System.Enum` 在泛型约束里只约束类型，不直接允许使用 `sizeof` 等直接的运算符
+        10. 结构的只读成员：允许一个结构的局部实例成员标记 `readonly` 来表示操作是不会修改实例内部的信息的
+        11. `stackalloc` 嵌套使用：可以在一个 `stackalloc` 内继续使用 `stackalloc` 了
+        12. `$@""` 和 `@$""`：这俩都可以允许了，之前只能让 `$@""` 语法成功编译
         13. `ObsoleteAttribute` 标记到 getter 和 setter 其一上
-        14. 允许泛型使用 `is null` 模式匹配
+        14. 允许泛型使用 `is null` 模式匹配：泛型在最开始是不让判断 `null` 的，现在可以允许一个泛型类型的变量判断是不是 `null` 了
     8. C# 9
-        1. 记录类型
-        2. `init` setter
-        3. `Main` 的隐式写法
-        4. `and`、`or` 和 `not` 模式
-        5. 兼容 C 不定大小的 `int` 和 `unsigned int`
+        1. 记录类型：
+            1. 一个简单的语法可以生成基本上所有的数据信息，来代替之前的匿名类型，可以长期使用，用法：`record Student(string Name, bool IsBoy);` 就可以生成很多信息，比如比较、属性本身、字符串输出、哈希码计算等方法
+            2. 记录类型的继承：只能由一个记录继承于一个记录；`ToString` 方法是自动生成的，所以子类型必须重写基记录类型的 `ToString`，否则格式会不匹配
+            3. 记录类型用于记录一些东西，所以没有 `static record` 一说
+            4. `record struct` 目前不允许，因为目前暂时只支持引用类型，而值类型的相等性比较过于复杂，特别是可能产生递归比较的模型，所以会很麻烦
+            5. `init` setter：记录的所有字段在生成的时候是自动把 `set` 改写成 `init` 的；这两个关键字都是一个属性的赋值器的有效格式写法，但区别在于 `set` 是随时随地都可以赋值，而 `init` 只有初始化（初始化器和构造器）时才可以使用，防止随意改变数据；可以从这个特性可以看出，记录类型是不可变的
+            6. `with` 表达式：由于记录类型不可变，所以如果你要赋值给一个新类型，且需要保留大部分信息的时候，可以使用 `with` 来赋值和修改需要修改的成员信息：`var newStudent = oldStudent with { Age = 20 };`
+            7. `init` 可以用于任何数据类型，但 `with` 目前只支持记录类型
+        3. `Main` 的隐式写法：允许把一个复杂的类声明、`Main` 函数声明等信息直接去掉，使得这个文件只剩下执行信息：
+
+        ```csharp
+        // Older.
+        using System;
+        
+        namespace Project
+        {
+            internal static class Program
+            {
+                private static void Main(string[] args)
+                {
+                    Console.WriteLine("Hello, world!");
+                }
+            }
+        }
+        
+        // Newer.
+        using System;
+        
+        Console.WriteLine("Hello, world!");
+        ```
+
+        4. `and`、`or` 和 `not` 模式：允许这三个关键字对数据本身的范围进行校验：
+            1. `and`：查看条件必须都满足：`AMethodReturnsAValue() is var result and not null`、`val is >= 20 and <= 30`
+            2. `or`：查看条件至少满足一个：`str is null or ""`、`val is < 20 or > 30`
+            3. `not`：取反一个条件：`obj is not null`
+            4. 注意优先级的问题
+        5. 兼容 C 不定大小的 `int` 和 `unsigned int`：允许 `nint` 和 `nuint` 来直接代替掉一个 C 这种不定大小的 `int`，这样就可以不用写成条件编译符号的模式来设定了
         6. 函数指针
-        7. `SkipLocalsInitAttribute`
-        8. 目标类型的 `new` 表达式
-        9. `static` Lambda 表达式或匿名函数
-        10. 目标类型的 `?:` 表达式
-        11. 协变返回类型
-        12. Lambda 参数弃元
+            1. 写法 `delegate* (managed|unmanaged[(Cdecl|StdCall|ThisCall)])? <参数表列>`
+            2. 为了兼容底层的函数指针，可以使用 `unmanaged` 关键字，具体看的是底层用的是什么调用约定
+        7. `SkipLocalsInitAttribute`：标记到执行操作之上，以保证执行期间直接跳过初始化，来优化性能
+        8. 目标类型的 `new` 表达式：在可以在 `new` 实例化类型的地方推断出类型的时候可以不写出类型名称：`Student s = new()`；如果是带有初始化器的时候，默认小括号不可省略
+        9. `static` Lambda 表达式或匿名函数：类似 `static` 本地函数的行为，不捕获变量
+        10. 目标类型的 `operator ?:` 表达式：假设 `A` 类型派生 `B` 类型，而 `B` 又派生 `C` 类型的话，则原始写法需要对条件运算符的其中一方转换类型：`C result = condition ? (C)new A() : new B()`，现在可以不用了：`C result = condition ? new A() : new B()`，只用查看赋值这边是啥类型就可以确定了
+        11. 协变返回类型：允许继承下来的子类型的这个方法，返回值类型可以从抽象类型逆变为具体类型；为啥叫协变返回而不是逆变返回，是因为名称是反过来看的
+        12. Lambda 参数弃元：允许多个 Lambda 参数都不用的时候使用 `_` 弃元
         13. 可标记到本地函数上的特性
-        14. 模块初始化器
-        15. `GetEnumerator` 扩展方法
-        16. 分部方法增强
+        14. 模块初始化器：允许在一个静态方法上标记 `ModuleInitializerAttribute` 特性来保证这个在程序开始初期就最先执行
+        15. `GetEnumerator` 扩展方法：编译器现在支持识别 `GetEnumerator` 扩展方法来支持对任何实现该方法的数据类型进行 `foreach` 的迭代
+        16. 分部方法增强：允许任何方法标记 `partial` 了，不过和 C# 3 的分部方法意义不同，这个分部方法必须必须实现，否则编译器错误
+        17. 没有任何约束的泛型参数可标记 `?` 了
+            1. 允许对一个完全没有任何泛型约束的泛型参数标记 `?` 来表达可为 `null`。如果它是值类型，则这个标记当没有用；如果是引用类型，则认为它可空
+            2. 对于值类型而言（有 `where T : struct` 约束的），`T?` 类型参数在具体化参数的时候，会被认为是 `Nullable<T>`，即真正的可空值类型；而 `T?` 在没有该约束的时候，`T?` 跟 `T` 没有任何区别
+            3. `default` 泛型约束：当对一个抽象方法或 `virtual` 方法重写的时候，如果原方法没有泛型约束的任何标记，此时可以使用 `where T : default` 标记，标记到重写方法上，保证 `T` 此时是默认没有任何泛型约束的；这一点专门用于区别和表达重写无泛型参数约束的方法（如果不用写，一般都可以不写，这一点仅用于保证程序的兼容性）：
+
+            ```csharp
+            class A
+            {
+                public virtual void F<T>(T? t) where T : struct { }
+                
+                public virtual void F<T>(T? t) { }
+            }
+
+            class B : A
+            {
+                // Equivalent to the method F with the constraint
+                // 'where T : struct'.
+                public override void F<T>(T? t) { }
+                
+                // The method overrides A.F(T?) without any constraint.
+                public override void F<T>(T? t) where T : default { }
+            }
+            ```
 
 19. 总结
 
