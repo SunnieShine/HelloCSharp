@@ -495,9 +495,9 @@
 
         public Thermostat(float temperature)
         {
-             Temperature = temperature;
+            Temperature = temperature;
 
-             _handler += new TemperatureChangedEventHandler(OnTemperatureChanged);
+            _handler += new TemperatureChangedEventHandler(OnTemperatureChanged);
         }
 
         public float Temperature
