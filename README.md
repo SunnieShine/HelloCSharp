@@ -209,7 +209,7 @@
 
 8. 预处理指令
 
-   1. `#if`、`#else`、`#elif`、#endif`
+   1. `#if`、`#else`、`#elif`、`#endif`
    2. `#define`、`#undef`
    3. `#warning`、`#error`
    4. `#line hidden`、`#line default`、`#line {Digit} [FileName]`
