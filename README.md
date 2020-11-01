@@ -3,6 +3,7 @@
 1. C# 简介
 
     1. 编译简单 C# 语言程序：
+
     ```csharp
     internal static class Program
     {
@@ -870,6 +871,8 @@
     5. C# 6
         1. `using static`：允许对一个具体的类、结构、枚举、接口和委托等直接引用，使得后续就不用再使用类似 `枚举.枚举成员` 的语法来确定字段信息
         2. 异常筛选器：使用 `when` 关键字确定异常的具体执行行为：`catch (Exception ex) when (ex.HResult == ...)`
+            1. `catch (Exception e) when (条件)` 格式
+            2. `catch when (条件)` 格式
         3. `await` 可以放在 `catch` 和 `finally` 里了
         4. 自动属性的初始化器：可以对一个自动属性的最后面进行赋值，表达对内部字段的初始化
         5. 只有 getter 的属性：自动属性可以只写 getter 了：`public int Property { get; }`
@@ -917,6 +920,7 @@
             [4] = "D"
         };
         ```
+
     6. C# 7
         1. `out` 参数
             1. 允许方法以 `out` 作为参数修饰符，表达返回多个数的时候，从参数返回
@@ -1024,15 +1028,15 @@
         19. `ref` 条件表达式：允许 `operator ?:` 返回 `ref` 结果
         20. 命名参数不一定只出现在末尾：C# 4 的命名参数只能放在方法的末尾，现在命名参数随时随地都可以用了
         21. `private protected` 访问修饰符：继承关系仅在项目内生效，别的外部程序调用 API 的时候将无法看到这类成员，即使是继承了
-        24. `System.Enum` 和 `System.Delegate` 泛型约束
+        22. `System.Enum` 和 `System.Delegate` 泛型约束
             1. `System.Enum` 约束传入的对象是一个枚举类型
             2. `System.Enum` 仅约定是一个枚举类型，但枚举特有的运算符在这个地方不能用；如果需要用运算符，请你将它转换为值类型后进行值类型的运算符进行计算（需要获取它的大小，因此请参考下面 C# 8 `unmanaged` 约束的做法）
             3. `System.Delegate` 约束一个委托类型
-        26. `stackalloc` 的初始化器：允许使用类似数组初始化器的模式初始化栈内存数组：`stackalloc[] { 1, 2, 3 }`
-        27. `fixed` 字段：允许字段在初始情况下就固定下来长度，该字段将被改写为指针，但因为长度固定，所以内容可以直接使用，通过索引器的方式使用
-        28. 自定义 `fixed` 语句声明（实现 `GetPinnableReference` 即可）
-        31. 值元组可以使用 `operator ==` 和 `operator !=` 了
-        32. 允许把特性标记到属性上，直接指定到隐藏到背后的字段上
+        23. `stackalloc` 的初始化器：允许使用类似数组初始化器的模式初始化栈内存数组：`stackalloc[] { 1, 2, 3 }`
+        24. `fixed` 字段：允许字段在初始情况下就固定下来长度，该字段将被改写为指针，但因为长度固定，所以内容可以直接使用，通过索引器的方式使用
+        25. 自定义 `fixed` 语句声明（实现 `GetPinnableReference` 即可）
+        26. 值元组可以使用 `operator ==` 和 `operator !=` 了
+        27. 允许把特性标记到属性上，直接指定到隐藏到背后的字段上
     7. C# 8
         1. 可空引用类型
             1. 允许使用类似可空值类型的语法 `T?` 来约束引用类型，规定和查看类型是否可空
@@ -1128,7 +1132,7 @@
             4. 注意优先级的问题
         5. 兼容 C 不定大小的 `int` 和 `unsigned int`：允许 `nint` 和 `nuint` 来直接代替掉一个 C 这种不定大小的 `int`，这样就可以不用写成条件编译符号的模式来设定了
         6. 函数指针
-            1. 写法 `delegate* (managed|unmanaged[(Cdecl|StdCall|ThisCall)])? <参数表列>`
+            1. 写法 `delegate* [managed|unmanaged[(Cdecl|StdCall|ThisCall)]] <[参数表列, ]返回值类型>`
             2. 为了兼容底层的函数指针，可以使用 `unmanaged` 关键字，具体看的是底层用的是什么调用约定
         7. `SkipLocalsInitAttribute`：标记到执行操作之上，以保证执行期间直接跳过初始化，来优化性能
         8. 目标类型的 `new` 表达式：在可以在 `new` 实例化类型的地方推断出类型的时候可以不写出类型名称：`Student s = new()`；如果是带有初始化器的时候，默认小括号不可省略
