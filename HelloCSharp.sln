@@ -7,6 +7,32 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloCSharp", "HelloCSharp\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6683BCD0-7BAB-4CB0-AF8F-3CBFE349D5C7}"
 	ProjectSection(SolutionItems) = preProject
+		Chapter01_BasicTerms.md = Chapter01_BasicTerms.md
+		Chapter02_TypeSystem.md = Chapter02_TypeSystem.md
+		Chapter03_Operators.md = Chapter03_Operators.md
+		Chapter04_ProgramStuctures.md = Chapter04_ProgramStuctures.md
+		Chapter05_Arrays.md = Chapter05_Arrays.md
+		Chapter06_Methods.md = Chapter06_Methods.md
+		Chapter07_Pointers.md = Chapter07_Pointers.md
+		Chapter08_Preprocessors.md = Chapter08_Preprocessors.md
+		Chapter09_ObjectOriented.md = Chapter09_ObjectOriented.md
+		Chapter10_Inheritance.md = Chapter10_Inheritance.md
+		Chapter11_Interfaces.md = Chapter11_Interfaces.md
+		Chapter12_Structures.md = Chapter12_Structures.md
+		Chapter13_Enumerations.md = Chapter13_Enumerations.md
+		Chapter14_Delegates.md = Chapter14_Delegates.md
+		Chapter15_Events.md = Chapter15_Events.md
+		Chapter16_Iterators.md = Chapter16_Iterators.md
+		Chapter17_Reflection.md = Chapter17_Reflection.md
+		Chapter18_Threading.md = Chapter18_Threading.md
+		Chapter19_2.md = Chapter19_2.md
+		Chapter19_3.md = Chapter19_3.md
+		Chapter19_4.md = Chapter19_4.md
+		Chapter19_5.md = Chapter19_5.md
+		Chapter19_6.md = Chapter19_6.md
+		Chapter19_7.md = Chapter19_7.md
+		Chapter19_8.md = Chapter19_8.md
+		Chapter19_9.md = Chapter19_9.md
 		README.md = README.md
 	EndProjectSection
 EndProject
