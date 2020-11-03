@@ -27,6 +27,6 @@
     5. [C# 6](Chapter19_6)
     6. [C# 7](Chapter19_7)
     7. [C# 8](Chapter19_8)
-    8. [C# 8](Chapter19_9)
+    8. [C# 9](Chapter19_9)
 20. 总结
 
