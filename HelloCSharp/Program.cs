@@ -1,9 +1,9 @@
 ﻿namespace HelloCSharp
 {
-	internal class Program
+    internal class Program
 	{
 		private static void Main()
 		{
-		}
-	}
+        }
+    }
 }
