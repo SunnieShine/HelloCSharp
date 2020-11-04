@@ -68,14 +68,16 @@ public IEnumerable<int> GetValuesBetween(int min, int max)
     if (max < min) yield break;
 
     for (int i = min; i <= max; i++)
-    yield return i;
+        yield return i;
 }
 ```
 
 泛型接口 `IEnumerator<T>` 可以简单说一下
+
 5. 可空值类型：表示包含 `null` 的值类型
     1. 写法：`值类型? 变量名 = 数值`
     2. 注意它是一个封装的结构，因此不能直接当普通的数值用，不过大部分值类型的用法都是可以用的，比如使用 `operator ==` 等运算符；但如果数值为 `null` 的时候，直接使用类似于 `.ToString` 的方法，会直接产生错误
+
 6. 访问级别不同的 getter 和 setter：允许 getter 和 setter 包含不同的访问级别，比如
 
 ```csharp
