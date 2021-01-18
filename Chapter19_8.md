@@ -33,15 +33,48 @@
         3. `DisallowNullAttribute`：在环境下本来必须写成 `T?` 的类型，但临时需要传入非 `null` 的时候可以用这个特性标记
         4. `MaybeNullAttribute`：不确定这个类型是不是为 `null`，一般用在带泛型参数的参数名、返回值、属性或者字段等成员上
         5. `NotNullAttribute`：如果类型必须写成 `T?` 的时候，此时如果输出时不可能为 `null` 的时候可这样标记，这样编译器就知道只有输入方向（比如传参）才是 `T?`
+    
 2. 默认接口成员：允许接口里写一些函数的具体实现
-3. 递归模式：允许在 `is` 模式匹配的时候使用属性或 `public` 字段和数值匹配的语法：`stu is { Age: 20, IsGirl: false }`
+
+3. 递归模式：允许在 `is` 模式匹配的时候使用属性或 `public` 字段和数值匹配的语法：`stu is { Age: 20, IsGirl: false }`；然后注意一下空大括号匹配，可以表示和判断是否对象为 `null`（对于可空的值类型来说，这个判断相当于 `HasValue`）
+
 4. `await foreach` 和 `await using`：允许异步迭代和异步使用一些资源
+
 5. `using` 语句：不用再写烦人的大括号了，现在直接写 `using var x = ...;` 就可以了
+
 6. 范围和索引运算：`^` 和 `..`：
     1. `^` 写在一个带 `Length` 或 `Count` 属性的集合的中括号索引调用里，表示取倒数第几个元素：`string s = "Hello"; char t = s[^2];`
     2. `..` 写在一个带 `Slice` 方法、`Length` 或 `Count` 属性的集合里的中括号索引调用里，表示取哪一个范围的元素：`string s = "Hello"; string t = s[0..^2]`；如果范围头部是 0 可不写；如果范围尾部是 ^1 也可以不写
+    
 7. 复合 `null` 传播赋值运算符 `??=`：`a = a ?? b` 可以简写为 `a ??= b`
+
+    1. 语义等价：`if (a is null) a = b;`
+
+    2. 注意值类型赋值的时候会产生语义漏洞：
+
+        ```csharp
+        using System;
+        
+        S? s = null;
+        (s ??= new()).Add(20);
+        
+        Console.WriteLine(s);
+        
+        internal struct S
+        {
+            private int _val;
+            
+            public S(int val) => _val = val;
+            
+            public void Add(int val) => _val += val;
+            public override readonly string ToString() => _val.ToString();
+        }
+        ```
+
+        这个例子输出结果可能不尽人意：答案不是 20，而是 0。这是值类型赋值的特性：在执行 `Add` 方法之前，对象要确定到底是给谁执行。实际上，这里并不是你看到的 `s.Add`，而是产生了副本，让这个副本改成了 20，而 `s` 压根没有变动。
+
 8. 静态本地函数：允许本地函数标记 `static` 关键字，以禁止捕获任何变量
+
 9. `unmanaged` 泛型约束
     1. 非托管类型定义拓展：
         1. 所有基本类型（`string` 和 `object` 除外）都是非托管类型
@@ -49,8 +82,13 @@
         3. 只包含第 2 点提到的结构，也都是非托管类型
     2. 约束使得可以用 `sizeof` 关键字计算大小，也可以使用 `T*` 指针运算
     3. 枚举是非托管类型的，但是 `System.Enum` 在泛型约束里只约束类型，不直接允许使用 `sizeof` 等直接的运算符
+
 10. 结构的只读成员：允许一个结构的局部实例成员标记 `readonly` 来表示操作是不会修改实例内部的信息的
+
 11. `stackalloc` 嵌套使用：可以在一个 `stackalloc` 内继续使用 `stackalloc` 了
+
 12. `$@""` 和 `@$""`：这俩都可以允许了，之前只能让 `$@""` 语法成功编译
+
 13. `ObsoleteAttribute` 标记到 getter 和 setter 其一上
+
 14. 允许泛型使用 `is null` 模式匹配：泛型在最开始是不让判断 `null` 的，现在可以允许一个泛型类型的变量判断是不是 `null` 了

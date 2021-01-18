@@ -39,3 +39,37 @@
     5. 拆箱类型错误会引起运行时异常（类似于前面强制转换错误时产生异常）
 
 8. 值类型不可继承任何类，但能实现接口；值类型不能派生自别的值类型，默认派生自 `System.ValueType`（而它又派生自 `System.Object`，它们都是引用类型）；在自定义值类型时，为了不影响执行效率和性能，请把默认实现的所有方法都重写掉
+
+9. 请不要相信结构的赋值运算符——只读的结构字段真的是只读的：
+
+    ```csharp
+    using System;
+    
+    internal struct Mutable
+    {
+        private int x;
+        
+        public int Mutate()
+        {
+            x++;
+            return x;
+        }
+    }
+    
+    internal class Test
+    {
+        public readonly Mutable m = new Mutable();
+        
+        private static void Main()
+        {
+            Test t = new Test();
+            
+            Console.WriteLine(t.m.Mutate());
+            Console.WriteLine(t.m.Mutate());
+            Console.WriteLine(t.m.Mutate());
+        }
+    }
+    ```
+
+    在这一则实例里，输出结果应该是三个 1。这是因为 `m` 是 `readonly` 的，在我们下方修改它的时候，系统会对这样的情况作出识别，当我们确实会修改内部的字段的时候，会自动产生一个保护性副本。而最终输出和修改的内容实际上是这个副本的东西，而不是原本的数据。这也就导致了结果得到的是 1（从 0 变为 1）；至于为什么三个都是相同的 1，是因为每执行一次都会产生 `x` 字段的变化，所以每次执行输出的时候，这里的 `t.m` 都会产生一次副本。所以实际上三个 `t.m` 是四个不同的对象。那么问题来了，为什么说四个不同的对象，而不是三个呢？因为这变动的 `t.m` 都是保护性副本，一共复制了三次，而算上 `m` 自己，一共是 4 个。
+    另外，从这个角度来说，引用类型的 `readonly` 不会产生类似的功效：引用类型复制的是引用，说白了就是地址，所以两个变量本身只是指向同一块内存而已。

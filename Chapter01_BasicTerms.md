@@ -29,7 +29,7 @@ System.Console.WriteLine("Hello, world!");
     3. 标识符的命名规范
         1. **驼峰命名法**（camelCase）
         2. **帕斯卡命名法**（PascalCase）
-        3. **匈牙利命名法**（Hungarian_case）
+        3. **匈牙利命名法**（typeCase）
         4. **🐍命名法**（snake_case）
         5. 一般方法用帕斯卡，变量用驼峰命名法
 4. 程序代码结构：类声明、方法声明、方法执行
