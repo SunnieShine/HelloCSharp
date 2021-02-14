@@ -1,8 +1,23 @@
 # 第 8 章：预处理指令（Preprocessors）
 
-   1. `#if`、`#else`、`#elif`、`#endif`
-   2. `#define`、`#undef`
-   3. `#warning`、`#error`
-   4. `#line hidden`、`#line default`、`#line {Digit} [FileName]`
-   5. `#region`、`#endregion`
-   6. `#pragma warning enable`、`#pragma warning disable`、`#pragma warning restore`
+## `#if`、`#else`、`#elif`、`#endif`
+
+条件编译符号的基本概念，然后才是这个，可参考[这个链接](https://www.zhihu.com/question/375751804)
+
+## `#define`、`#undef`
+
+## `#warning`、`#error`
+
+## `#line`
+
+* `#line hidden`
+* `#line default`
+* `#line {Digit} [FileName]`
+
+## `#region`、`#endregion`
+
+## `#pragma`
+
+* `#pragma warning enable`
+* `#pragma warning disable`
+* `#pragma warning restore`
