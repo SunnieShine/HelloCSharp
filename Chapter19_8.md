@@ -1,74 +1,103 @@
 # C# 8
 ## 可空引用类型
 
-1. 允许使用类似可空值类型的语法 `T?` 来约束引用类型，规定和查看类型是否可空
+### 语法
 
-2. 启用特性的两种办法：
-    1. 在 `*.csproj` 文件里添加 `<Nullable>enable</Nullable>` 以全局启用
-    2. 在文件的开头添加预处理指令 `#nullable enable`，这样只对当前文件有效
-    
-3. 预处理指令：
-    * `#nullable enable`
-    * `#nullable enable annotations`
-    * `#nullable enable warnings`
-    * `#nullable disable`
-    * `#nullable disable annotations`
-    * `#nullable disable warnings`
-    * `#nullable restore`
-    * `#nullable restore annotations`
-    * `#nullable restore warnings`
-    
-4. 基本用法：`string? s = null;`，当使用 `string s = null;` 时会产生编译器警告信息，提示你正在把 `null` 赋值给一个不可空的引用类型；如果把 `T?` 类型变量赋值给 `T` 类型的变量时，也会产生警告
+允许使用类似可空值类型的语法 `T?` 来约束引用类型，规定和查看类型是否可空
 
-5. `null` 禁用运算符（`Null`-Suppression Operator）
-   
-    1. 当编译器并不知道我们这里赋值 `null` 不影响可空性的时候，可以使用这个后缀运算符来禁用编译器对这个行为的警告：比如我有一个 `Point` 的类，包含 `X` 和 `Y` 两个信息，然后写了一个解析函数 `Parse`，把字符串转换为这个类型的变量。由于解析有可能失败，所以返回值应当是 `Point?` 的类型。但如果我们使用 `Point result = Point.Parse("(1, 3)");` 类似的写法时，由于返回值是 `Point?` 类型的关系，就会产生编译器错误；所以此时我们需要对这个错误的编译器警告进行禁用：`Point result = Point.Parse("(1, 3)")!;`，在末尾加一个 `!` 就可以了
-    2. 注意运算符会改变类型的语义。如果代码里这么写：
+### 启用特性的两种办法
+
+1. 在 `*.csproj` 文件里添加 `<Nullable>enable</Nullable>` 以全局启用
+2. 在文件的开头添加预处理指令 `#nullable enable`，这样只对当前文件有效
+
+### 预处理指令
+
+* `#nullable enable`
+* `#nullable enable annotations`
+* `#nullable enable warnings`
+* `#nullable disable`
+* `#nullable disable annotations`
+* `#nullable disable warnings`
+* `#nullable restore`
+* `#nullable restore annotations`
+* `#nullable restore warnings`
+
+### 基本用法
+
+`string? s = null;`，当使用 `string s = null;` 时会产生编译器警告信息，提示你正在把 `null` 赋值给一个不可空的引用类型；如果把 `T?` 类型变量赋值给 `T` 类型的变量时，也会产生警告
+
+### `null` 禁用运算符（`Null`-Suppression Operator）
+
+1. 当编译器并不知道我们这里赋值 `null` 不影响可空性的时候，可以使用这个后缀运算符来禁用编译器对这个行为的警告：比如我有一个 `Point` 的类，包含 `X` 和 `Y` 两个信息，然后写了一个解析函数 `Parse`，把字符串转换为这个类型的变量。由于解析有可能失败，所以返回值应当是 `Point?` 的类型。但如果我们使用 `Point result = Point.Parse("(1, 3)");` 类似的写法时，由于返回值是 `Point?` 类型的关系，就会产生编译器错误；所以此时我们需要对这个错误的编译器警告进行禁用：`Point result = Point.Parse("(1, 3)")!;`，在末尾加一个 `!` 就可以了
+2. 注意运算符会改变类型的语义。如果代码里这么写：
+
+```csharp
+var p = Point.Parse("(1, 3)")!;
+var q = Point.Parse("(1, 3)");
+```
+
+那么 `p` 是 `Point` 类型，而 `q` 此时应该是 `Point?` 类型
+
+### `as` 的可空性
+
+`as` 转换**一定可能**失败，所以返回值必然可能为 `null`，所以如果一定不空，要么建议你使用 `(T)` 强制转换，要么使用 `!` 禁用编译器警告
+
+### 尽量少用 `null` 原谅
+
+`null` 原谅运算符本身很鸡肋也很奇葩，所以不建议随时随地都用这个运算符，而是使用如下的一些模型来减少和削弱对该运算符的使用：
+
+1. `NotNullWhenAttribute`：表示返回值类型是布尔值的时候，可以对应到结果是否为 `null`：如果返回值为 `true`，则该数值结果不应该为 `null` 的时候，可以写成 `[NotNullWhen(true)]`，标记到参数上表示该参数满足该约定
+2. `AllowNullAttribute`：在环境下本来必须写成 `T` 的类型，但临时需要允许传入 `null` 的时候可以用这个特性标记
+3. `DisallowNullAttribute`：在环境下本来必须写成 `T?` 的类型，但临时需要传入非 `null` 的时候可以用这个特性标记
+4. `MaybeNullAttribute`：不确定这个类型是不是为 `null`，一般用在带泛型参数的参数名、返回值、属性或者字段等成员上
+5. `NotNullAttribute`：如果类型必须写成 `T?` 的时候，此时如果输出时不可能为 `null` 的时候可这样标记，这样编译器就知道只有输入方向（比如传参）才是 `T?`
+
+### `NotNullWhenAttribute` 的正向和逆向逻辑应用
+
+正向使用（当返回值为 `true` 或 `false` 的时候，参数在出函数的时候一定不为 `null`）：
+
+```csharp
+bool TryParse(string val, [NotNullWhen(true)] out string? path);
+```
+
+逆向使用（当返回值为 `true` 或 `false` 的时候，参数在输入的时候一定不是 `null`）：
+
+```csharp
+bool Exists([NotNullWhen(true)] string? filePath);
+```
+
+特别注意的是两个差别仅在有没有 `out` 修饰符，但意味和逻辑完全就反过来了。
+
+### 一些不能被编译器识别的、但我们一定能看出来不空的情况
+
+1. `_ = (a is null, b is null) switch { (false, false) => a.SomeProperty == b.SomeProperty; }`（编译器将不对这个情况进行识别和更改，详情请参考[这篇帖子](https://github.com/dotnet/roslyn/issues/46819)）
+
+2. 复杂的分析（单独用一个变量记录和绑定是否为 `null` 的情况）：
 
     ```csharp
-    var p = Point.Parse("(1, 3)")!;
-    var q = Point.Parse("(1, 3)");
+    bool condition = true; // May be some other condition.
+    
+    // ...
+    // Some code that doesn't modify 'condition'.
+    // ...
+    
+    ClassObject? co = condition ? new() : null;
+    if (condition) // Here allows more conditions using 'operator &&'.
+    {
+        co.SomeMethod(); // CS8602.
+    }
+    
+    public class ClassObject
+    {
+        public void SomeMethod() { }
+    }
     ```
 
-    那么 `p` 是 `Point` 类型，而 `q` 此时应该是 `Point?` 类型
-    
-6. `as` 转换**一定可能**失败，所以返回值必然可能为 `null`，所以如果一定不空，要么建议你使用 `(T)` 强制转换，要么使用 `!` 禁用编译器警告
-
-7. `null` 原谅运算符本身很鸡肋也很奇葩，所以不建议随时随地都用这个运算符，而是使用如下的一些模型来减少和削弱对该运算符的使用：
-    1. `NotNullWhenAttribute`：表示返回值类型是布尔值的时候，可以对应到结果是否为 `null`：如果返回值为 `true`，则该数值结果不应该为 `null` 的时候，可以写成 `[NotNullWhen(true)]`，标记到参数上表示该参数满足该约定
-    2. `AllowNullAttribute`：在环境下本来必须写成 `T` 的类型，但临时需要允许传入 `null` 的时候可以用这个特性标记
-    3. `DisallowNullAttribute`：在环境下本来必须写成 `T?` 的类型，但临时需要传入非 `null` 的时候可以用这个特性标记
-    4. `MaybeNullAttribute`：不确定这个类型是不是为 `null`，一般用在带泛型参数的参数名、返回值、属性或者字段等成员上
-    5. `NotNullAttribute`：如果类型必须写成 `T?` 的时候，此时如果输出时不可能为 `null` 的时候可这样标记，这样编译器就知道只有输入方向（比如传参）才是 `T?`
-    
-8. 一些不能被编译器识别的、但我们一定能看出来不空的情况：
-
-    1. `_ = (a is null, b is null) switch { (false, false) => a.SomeProperty == b.SomeProperty; }`（编译器将不对这个情况进行识别和更改，详情请参考[这篇帖子](https://github.com/dotnet/roslyn/issues/46819)）
-
-    2. 复杂的分析（单独用一个变量记录和绑定是否为 `null` 的情况）：
-
-        ```csharp
-        bool condition = true; // May be some other condition.
-        
-        // ...
-        // Some code that doesn't modify 'condition'.
-        // ...
-        
-        ClassObject? co = condition ? new() : null;
-        if (condition) // Here allows more conditions using 'operator &&'.
-        {
-            co.SomeMethod(); // CS8602.
-        }
-        
-        public class ClassObject
-        {
-            public void SomeMethod() { }
-        }
-        ```
-
-    3. 这些情况目前只能使用 `null` 禁用运算符来取消报错，或者直接使用 `#nullable disable warnings` 禁用。编译器应当是可以识别这些情况的，但由于分析实现的代码“费力不讨好”（代码很多，但只能作出对这么细节情况的分析），所以没有必要实现，编译器因此不考虑对这种情况进行识别和实现
+3. 这些情况目前只能使用 `null` 禁用运算符来取消报错，或者直接使用 `#nullable disable warnings` 禁用。编译器应当是可以识别这些情况的，但由于分析实现的代码“费力不讨好”（代码很多，但只能作出对这么细节情况的分析），所以没有必要实现，编译器因此不考虑对这种情况进行识别和实现
 
 ## 默认接口成员
+
+### 用法
 
 允许接口里写一些函数的具体实现
 
@@ -82,7 +111,37 @@ public interface ICloneable<T> : ICloneable where T : class?
 }
 ```
 
-比如前文的例子里，我们可以内联实现逻辑到接口里，就不用单独写一份实现到外面去了。这样可以保证和规避代码的冗余。比如目前的 `IEnumerable<T>` 实现就得把泛型版本的 `GetEnumerator` 和普通版本的 `GetEnumerator` 都实现到类里。
+比如前文的例子里，我们可以内联实现逻辑到接口里，就不用单独写一份实现到外面去了。这样可以保证和规避代码的冗余。比如目前的 `IEnumerable<T>` 实现就得把泛型版本的 `GetEnumerator` 和普通版本的 `GetEnumerator` 都实现到类里
+
+### 静态成员在此特性里的效果
+
+不用多说了，静态成员照样和前文的写法一样，写在接口里，用 `public static` 修饰（当然，也可以是别的访问修饰符）。不过，这样实现的方法，只有接口成员可见，如果是实例的话，这个成员是看不到的：
+
+```csharp
+public interface IParsable
+{
+    public static MyInt32 Parse(string s) => (MyInt32)int.Parse(s);
+}
+```
+
+那么
+
+```csharp
+public readonly struct MyInt32 : IParsable
+{
+    ...
+}
+```
+
+定义的这个结构，我们无论如何都不可以在 `MyInt32` 结构里使用  `Parse` 方法。除非你使用 `接口.方法` 才可以：
+
+```csharp
+MyInt32 i = IParsable.Parse("20");
+```
+
+但这一点来说，我还不如写一个静态类呢，因为目前这个语法只是为了兼容老版本的格式，不必写成这样
+
+因此，我们并不建议大家这么使用这个写法（当然了，这个写法存在有它的道理，至于道理嘛……你就不用管那么多了）
 
 ## 递归模式
 
