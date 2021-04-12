@@ -104,7 +104,7 @@ bool Exists([NotNullWhen(true)] string? filePath);
 ```csharp
 public interface ICloneable<T> : ICloneable where T : class?
 {
-    T Clone();
+    [MaybeNull] T Clone();
     
     // Default interface member.
     object ICloneable.Clone() => Clone();
